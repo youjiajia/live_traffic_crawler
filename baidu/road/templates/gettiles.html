@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>地图坐标概念</title>
+<script src="http://api.map.baidu.com/api?v=1.2"></script>
+</head>
+<body>
+<div id="map_container" style="width:500px;height:320px;"></div>
+<script>
+var map =new BMap.Map('map_container', {defaultCursor: 'default'});
+map.centerAndZoom(new BMap.Point(117.396814,40.233095), 17);
+
+var TILE_SIZE =256;
+var info =new BMap.InfoWindow('', {width: 260});
+var projection =map.getMapType().getProjection();
+
+function gettile(a,b){
+var worldCoordinate = projection.lngLatToPoint(new BMap.Point(a,b));
+var pixelCoordinate =new BMap.Pixel(Math.floor(worldCoordinate.x * Math.pow(2, map.getZoom() -18)),
+Math.floor(worldCoordinate.y * Math.pow(2, map.getZoom() -18)));
+var tileCoordinate =new BMap.Pixel(Math.floor(pixelCoordinate.x /256),
+Math.floor(pixelCoordinate.y /256));
+return tileCoordinate.x.toString()+','+tileCoordinate.y.toString()
+}
+var jsonobject = JSON.parse('{{cityjson|safe}}');
+var jsonreturn = jsonobject;
+for(var i=0;i<jsonobject.other.length;i++)
+{
+    citygeos = jsonobject.other[i].b.split(';')
+    onereturnstr = ''
+    for(var n=0;n<citygeos.length;n++)
+    {
+        if (citygeos[n] != ''){
+            onegeo = citygeos[n].split(',')
+            onetile = gettile(onegeo[0],onegeo[1])
+            onereturnstr += onetile
+            onereturnstr += ';'
+        }
+    }
+    jsonreturn.other[i].b=onereturnstr
+}
+for(var i=0;i<jsonobject.municipalities.length;i++)
+{
+    citygeos = jsonobject.municipalities[i].b.split(';')
+    onereturnstr = ''
+    for(var n=0;n<citygeos.length;n++)
+    {
+        if (citygeos[n] != ''){
+            onegeo = citygeos[n].split(',')
+            onetile = gettile(onegeo[0],onegeo[1])
+            onereturnstr += onetile
+            onereturnstr += ';'
+        }
+    }
+    jsonreturn.municipalities[i].b=onereturnstr
+}
+for(var i=0;i<jsonobject.provinces.length;i++)
+{
+    oneprovince = jsonobject.provinces[i]
+        for(var n=0;n< oneprovince.cities.length;n++)
+        {
+            onecitygeo = oneprovince.cities[n].b.split(';')
+            onereturnstr = ''
+            for(var m=0;m<onecitygeo.length;m++)
+            {
+                if (onecitygeo[m] != ''){
+                     onegeo = onecitygeo[m].split(',')
+                     onetile = gettile(onegeo[0],onegeo[1])
+                     onereturnstr += onetile
+                     onereturnstr += ';'
+                }
+            }
+            jsonreturn.provinces[i].cities[n].b=onereturnstr
+        }
+
+            onecitygeo = oneprovince.b.split(';')
+            onereturnstr = ''
+            for(var m=0;m<onecitygeo.length;m++)
+            {
+                if (onecitygeo[m] != ''){
+                     onegeo = onecitygeo[m].split(',')
+                     onetile = gettile(onegeo[0],onegeo[1])
+                     onereturnstr += onetile
+                     onereturnstr += ';'
+                }
+            }
+            jsonreturn.provinces[i].b=onereturnstr
+}
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.open("POST", "/road/updatefile/", false);
+                xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xmlhttp.send(JSON.stringify(jsonreturn));
+                                                        xmlhttp.onreadystatechange=function(){
+                                                            if(xmlhttp.readyState===4&xmlhttp.status===200){
+                                                                                 alert(xmlhttp.responseText);
+                                                            }else{
+                                                                                 alert(xmlhttp.status);
+                                                            }
+                                                        }
+</script>
+</body>
+</html>

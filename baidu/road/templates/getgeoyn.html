@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>地图坐标概念</title>
+<script src="http://api.map.baidu.com/api?v=1.2"></script>
+</head>
+<body>
+<div id="map_container" style="width:500px;height:320px;"></div>
+<script>
+var map =new BMap.Map('map_container', {defaultCursor: 'default'});
+map.centerAndZoom(new BMap.Point(117.396814,40.233095), 17);
+var TILE_SIZE =256;
+var info =new BMap.InfoWindow('', {width: 260});
+var projection =map.getMapType().getProjection();
+var getstr = "{{returnstr}}";
+function gettile(getstr){
+    var returnstr = ''
+    var datas=getstr.split('|')
+        for(var i=0;i<datas.length;i++){
+            var data=datas[i].split(',')
+                if (data != ''){
+                    var a=data[0]
+                    var b=data[1]
+                    var x=data[2]
+                    var y=data[3]
+                    var time=data[4]
+                    var status=data[5]
+                    var p=new BMap.Pixel(Math.floor((parseInt(a)*256+parseInt(x)) / Math.pow(2, map.getZoom() -18)),
+                    Math.floor((parseInt(b)*256+parseInt(y)) / Math.pow(2, map.getZoom() -18)));
+                    var projection = map.getMapType().getProjection();
+                    var LngLat = projection.pointToLngLat(p);
+                    returnstr += a+','+b+','+LngLat.lng+','+LngLat.lat+','+time+','+status+'|'
+                }
+        }
+    console.log(returnstr)
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "/road/yninsertdata/", false);
+    xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xmlhttp.setRequestHeader('returnstr',returnstr);
+    var blob='';
+    xmlhttp.send(blob);
+    xmlhttp.onreadystatechange=function(){
+        if(xmlhttp.readyState===4&xmlhttp.status===200){
+            // alert(xmlhttp.responseText);
+        }else{
+            // alert(xmlhttp.status);
+        }
+    }
+}
+gettile(getstr)
+</script>
+</body>
+</html>
